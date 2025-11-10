@@ -1,0 +1,24 @@
+services:
+  - name: mariadb
+    type: database
+    database:
+      engine: mariadb
+      version: "10.11"
+      name: uvlhubdb
+      user: uvlhub_user
+      password: uvlhub_password
+
+  - name: flask-app
+    type: web
+    ports:
+      - port: 8000
+        protocol: http
+    env:
+      FLASK_ENV: production
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_USER: uvlhub_user
+      DB_PASSWORD: uvlhub_password
+      DB_NAME: uvlhubdb
+    build:
+      dockerfile: ./Dockerfile
