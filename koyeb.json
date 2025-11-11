@@ -1,62 +1,6 @@
 {
-  "app_name": "acb-hub-pruebas",
-  "type": "WEB",
-  "strategy": {
-    "type": "ROLLING"
-  },
-  "regions": ["fra"],
-  "routes": [
-    {
-      "port": 8080,
-      "path": "/"
-    }
-  ],
-  "ports": [
-    {
-      "port": 8080,
-      "protocol": "HTTP"
-    }
-  ],
-  "env": [
-    { "key": "DOMAIN", "value": "uvlhubonrender.com" },
-    { "key": "FLASK_APP", "value": "app" },
-    { "key": "FLASK_APP_NAME", "value": "ACBHUB.IO" },
-    { "key": "FLASK_ENV", "value": "production" },
-    { "key": "MARIADB_DATABASE", "value": "acbhubdb_softunitwe" },
-    { "key": "MARIADB_HOSTNAME", "value": "43suvf.h.filess.io" },
-    { "key": "MARIADB_PASSWORD", "value": "49c430f9ddc0f3680bc3a1b2acf017c338c7de33" },
-    { "key": "MARIADB_PORT", "value": "3305" },
-    { "key": "MARIADB_USER", "value": "acbhubdb_softunitwe" },
-    { "key": "SECRET_KEY", "value": "dev_test_key_1234567890abcdefghijklmnopqrstu" }
-  ],
-  "scaling": {
-    "min": 0,
-    "max": 1
-  },
-  "instance_type": "free",
-  "health_checks": [
-    {
-      "http": {
-        "port": 8080,
-        "path": "/",
-        "method": "GET"
-      },
-      "interval": 30,
-      "timeout": 5,
-      "grace_period": 300,
-      "restart_limit": 3
-    }
-  ],
   "git": {
     "repository": "https://github.com/EGC-acbhub/acb-hub_pruebas",
-    "branch": "main",
-    "build_command": "",
-    "run_command": "",
-    "workdir": "",
-    "docker": {
-      "dockerfile": "docker/images/Dockerfile.render",
-      "args": [],
-      "privileged": true
-    }
+    "branch": "main"
   }
 }

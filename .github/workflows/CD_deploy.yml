@@ -25,9 +25,10 @@ jobs:
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
         run: |
+          SERVICE_ID="f95488b4-ec74-419c-91c0-e2ebcddf2be0"
           echo "🚀 Iniciando despliegue en Koyeb..."
 
-          curl -X POST "https://app.koyeb.com/v1/deployments" \
+          curl -X POST "https://api.koyeb.com/v1/services/$SERVICE_ID/deployments" \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
             -H "Content-Type: application/json" \
             -d @koyeb.json
