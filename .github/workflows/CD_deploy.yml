@@ -31,11 +31,11 @@ jobs:
           curl -X POST "https://app.koyeb.com/v1/services/$SERVICE_ID/redeploy" \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
             -H "Content-Type: application/json" \
-            -d "{
-                \"deployment_group\": \"\",
-                \"sha\": \"\",
-                \"use_cache\": true,
-                \"skip_build\": true,
-              }"
+            -d '{
+              "deployment_group": "",
+              "sha": "",
+              "use_cache": true,
+              "skip_build": false
+            }'
 
           echo "✅ Despliegue enviado. Revisa tu panel en https://app.koyeb.com"
