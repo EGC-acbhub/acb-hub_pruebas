@@ -22,15 +22,14 @@ jobs:
 
       - name: Install Koyeb CLI
         run: |
-          curl -sL https://github.com/koyeb/koyeb-cli/releases/latest/download/koyeb-linux-amd64 -o /usr/local/bin/koyeb
-          chmod +x /usr/local/bin/koyeb
+          curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+          export PATH=$HOME/.koyeb/bin:$PATH
 
       - name: Redeploy service
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
         run: |
-          koyeb login 
-          $KOYEB_API_KEY
+          koyeb login --token "$KOYEB_API_KEY"
           koyeb service redeploy acbhub/acb-hub-pruebas \
             --use-cache \
             --skip-build=false
