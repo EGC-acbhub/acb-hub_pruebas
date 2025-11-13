@@ -10,32 +10,26 @@ on:
   # which case the git-url must be set to the repository to build.
   workflow_call:
     secrets:
-      KOYEB_EXAMPLES_APPS_TOKEN:
+      KOYEB_API_KEY:
         required: true
 
 jobs:
-  deploy:
+  redeploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Koyeb
+      - name: Install Koyeb CLI
+        run: |
+          curl -sL https://github.com/koyeb/koyeb-cli/releases/latest/download/koyeb-linux-amd64 -o /usr/local/bin/koyeb
+          chmod +x /usr/local/bin/koyeb
+
+      - name: Redeploy service
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
         run: |
-          SERVICE_ID="f95488b4-ec74-419c-91c0-e2ebcddf2be0"
-          echo "🚀 Iniciando despliegue en Koyeb..."
-
-          curl -X POST "https://app.koyeb.com/v1/services/$SERVICE_ID/redeploy" \
-            -H "Authorization: Bearer $KOYEB_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "deployment_group": "",
-              "sha": "",
-              "use_cache": true,
-              "skip_build": false
-            }'
-
-          echo "✅ Despliegue enviado. Revisa tu panel en https://app.koyeb.com"
+          koyeb login --token "$KOYEB_API_KEY"
+          koyeb service redeploy acbhub/acb-hub-pruebas \
+            --use-cache \
+            --skip-build=false
