@@ -29,4 +29,4 @@ jobs:
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
         run: |
-          /home/runner/.koyeb/bin/koyeb --help
+          /home/runner/.koyeb/bin/koyeb service redeploy acbhub/acb-hub-pruebas --token "$KOYEB_API_KEY" --use-cache --skip-build=false
