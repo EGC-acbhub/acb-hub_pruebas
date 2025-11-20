@@ -2,9 +2,9 @@ name: Deploy to Koyeb
 
 on:
 
-  push:
-    branches:
-      - "main"
+  release:
+    # Trigger only when a release is published
+    types: [published]
 
   # The workflow_call event is used to trigger the job from another workflow, in
   # which case the git-url must be set to the repository to build.
