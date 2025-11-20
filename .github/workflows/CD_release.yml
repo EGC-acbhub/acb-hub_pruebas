@@ -1,0 +1,127 @@
+name: Create Release on Tag
+
+on:
+  push:
+    tags:
+      - '*'        # Se ejecuta con cualquier tag
+    branches:
+      - main       # Solo si el tag está en la rama main
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Necesario para obtener todos los tags y commits
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update && sudo apt-get install -y gh
+
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          echo "${GITHUB_TOKEN}" | gh auth login --with-token
+
+      - name: Build artifacts (optional)
+        run: |
+          echo "Building example artifacts..."
+          mkdir -p dist
+          echo "Version info for ${GITHUB_REF#refs/tags/}" > dist/version.txt
+          zip -r dist/build-${GITHUB_REF_NAME}.zip dist/
+        # Aquí deberías reemplazar este bloque con tus comandos reales de build
+
+      - name: Generate release notes
+        id: releasenotes
+        run: |
+          set -e
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+
+          echo "Generating release notes for tag: $TAG_NAME"
+
+          # Obtener el tag anterior (si existe)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "$TAG_NAME^" 2>/dev/null || echo "")
+
+          echo "Previous tag: $PREVIOUS_TAG"
+
+          # Obtener commits entre tags
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log "$TAG_NAME" --no-merges --pretty=format:"%s (%h)" | grep -v '^Revert ')
+            COMMIT_HISTORY_LINK="https://github.com/${{ github.repository }}/commits/${TAG_NAME}"
+          else
+            COMMITS=$(git log "$PREVIOUS_TAG..$TAG_NAME" --no-merges --pretty=format:"%s (%h)" | grep -v '^Revert ')
+            COMMIT_HISTORY_LINK="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
+          fi
+
+          FEATURES=""
+          TESTS=""
+          CI=""
+          OTHER=""
+          SEEN_MESSAGES=()
+
+          while IFS= read -r line; do
+            # Extraer mensaje y hash
+            if [[ "$line" =~ ^(feat|ci|test|fix|refactor|chore|style):\ (.+)\ \((.+)\)$ ]]; then
+              TYPE="${BASH_REMATCH[1]}"
+              DESC="${BASH_REMATCH[2]}"
+              HASH="${BASH_REMATCH[3]}"
+              MESSAGE="${TYPE}: ${DESC}"
+              LINK="https://github.com/${{ github.repository }}/commit/${HASH}"
+            else
+              MESSAGE="$line"
+              HASH=""
+            fi
+
+            # Saltar si el mensaje ya fue visto
+            if [[ " ${SEEN_MESSAGES[*]} " == *" ${MESSAGE} "* ]]; then
+              continue
+            fi
+            SEEN_MESSAGES+=("${MESSAGE}")
+
+            # Clasificar commit
+            if [[ "$line" =~ ^feat: ]]; then
+              FEATURES+="- ${MESSAGE} ([${HASH}](${LINK}))\n"
+            elif [[ "$line" =~ ^test: ]]; then
+              TESTS+="- ${MESSAGE} ([${HASH}](${LINK}))\n"
+            elif [[ "$line" =~ ^ci: ]]; then
+              CI+="- ${MESSAGE} ([${HASH}](${LINK}))\n"
+            else
+              OTHER+="- ${MESSAGE}\n"
+            fi
+          done <<< "$COMMITS"
+
+          RELEASE_NOTES="# Release ${TAG_NAME}\n\n"
+          RELEASE_NOTES+="## ✨ Features\n${FEATURES:-No new features.}\n"
+          RELEASE_NOTES+="## 🧪 Tests\n${TESTS:-No test changes.}\n"
+          RELEASE_NOTES+="## ⚙️ Continuous Integration\n${CI:-No CI changes.}\n"
+          RELEASE_NOTES+="## 📦 Other Changes\n${OTHER:-No other changes.}\n"
+          RELEASE_NOTES+="\n## 🔗 Full Commit History\n[View commits](${COMMIT_HISTORY_LINK})"
+
+          echo -e "$RELEASE_NOTES" > release_notes.md
+
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release with binaries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Creating GitHub release for $TAG_NAME"
+          gh release create "$TAG_NAME" \
+            --title "$TAG_NAME" \
+            --notes-file release_notes.md \
+            --target main \
+            dist/build-${GITHUB_REF_NAME}.zip
