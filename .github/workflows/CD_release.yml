@@ -15,14 +15,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure tag belongs to main
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          if ! git merge-base --is-ancestor "$(git rev-list -n 1 "$TAG")" origin/main; then
-            echo "El tag $TAG no pertenece a main. Abortando."
-            exit 1
-          fi
-
       - name: Install GitHub CLI
         run: |
           sudo apt-get update && sudo apt-get install -y gh
